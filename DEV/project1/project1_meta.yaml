@@ -1,0 +1,92 @@
+---
+READY: True  # Защита от "дурака", если не True, то автоматизация проигнорирует весь файл
+
+TEAM:
+  # Описание состава команды (роли)
+  USER_LOCATION: ldap  # local or ldap
+  ROLES:
+    owner:
+      - user1
+    developer:
+      - user2
+      - user3
+    qa:
+      - user3
+      - user4
+
+GLOBAL_PRIVILEGES: &global_privileges
+  # Базовый набор привилегий для каждой роли в команде
+  owner: [read, write, delete]
+  developer: [read, write]
+  qa: [read]
+
+
+RESOURCES:
+  # Ресурсы, обслуживаемые автоматизацией
+  nexus:
+
+    # В случае необходимости выделенного блоба
+    blob:
+      - name: test-blob
+        path: test-blob
+
+    repository:  # Сущности
+      
+        # Maven
+        - name: test-maven-releases
+          locationType: hosted
+          repoType: maven
+        - name: test-maven-proxy
+          locationType: proxy
+          blobStoreName: test
+          remoteUrl: http://test.ru
+          repoType: maven
+        
+        # Docker
+        - name: test-docker-releases
+          locationType: hosted
+          repoType: docker
+        - name: test-docker-proxy
+          locationType: proxy
+          blobStoreName: test-blob
+          remoteUrl: http://test.ru
+          repoType: docker
+        - name: test-docker-group
+          blobStoreName: test-blob
+          locationType: group
+          httpPort: 10555
+          repoType: docker
+          forceBasicAuth: False      # Позволяет поставить галочку требуемую для анонимного docker pull
+          memberNames:
+            - test-docker-releases
+            - test-docker-proxy
+        
+        # Npm
+        - name: test-npm-proxy
+          locationType: proxy
+          remoteUrl: http://test.ru
+          repoType: npm
+
+        # Формат репозитория не имеет API
+        # требуется управлять привилегиями (репозиторий создан руками)
+        - name: foo-foo-foo
+          repoType: maven  # обязательно заполнить форматом
+          privilegesOnly: True
+
+    privileges:
+      # Поддерживаемые конвертации привилегий для Nexus
+      # Поддерживаемые:
+        # read: nx-repository-view-{type}-{name}-[read/browse]
+        # write: nx-repository-view-{type}-{name}-[edit/add]
+        # delete: nx-repository-view-{type}-{name}-delete
+      <<: *global_privileges
+
+  bitbucket:
+    name: project1-example
+    description: "Описание проекта"
+    privileges:
+      <<: *global_privileges
+
+  jenkins:
+  bamboo:
+  tower:
